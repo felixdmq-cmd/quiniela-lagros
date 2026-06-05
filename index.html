@@ -43,7 +43,6 @@
     margin-top: 4px;
     letter-spacing: 1px;
   }
-  .ball { display:inline-block; transform: translateY(2px); }
   nav {
     display: flex;
     justify-content: center;
@@ -71,7 +70,7 @@
     border-color: var(--gold);
   }
   main {
-    max-width: 900px;
+    max-width: 980px;
     margin: 0 auto;
     padding: 20px 16px 80px;
   }
@@ -84,6 +83,7 @@
     border: 1px solid rgba(255,255,255,0.05);
   }
   h2 { margin-top: 0; color: var(--gold); }
+  h3 { color: var(--gold); margin-bottom: 8px; }
   input, select {
     background: #0f1530;
     border: 1px solid rgba(255,255,255,0.15);
@@ -110,10 +110,78 @@
   button.primary:hover { filter: brightness(1.1); }
   button.danger { background: var(--red); color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
   button.ghost { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+  button.big-load {
+    background: linear-gradient(135deg, #4f8cff, #2ecc71);
+    color: white;
+    border: none;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 17px;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 0 4px 14px rgba(46,204,113,0.3);
+  }
+  /* === Stage tabs === */
+  .stage-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 4px 2px;
+    margin-bottom: 16px;
+    scrollbar-width: thin;
+  }
+  .stage-tabs button {
+    background: #0f1530;
+    color: var(--muted);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .stage-tabs button:hover { background: #1a2348; color: var(--text); }
+  .stage-tabs button.active {
+    background: var(--gold);
+    color: #1a1a1a;
+    border-color: var(--gold);
+  }
+  /* === Group view === */
+  .group-card {
+    background: linear-gradient(135deg, #1a2348, #243064);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 2px solid var(--gold);
+  }
+  .group-title {
+    font-size: 24px;
+    color: var(--gold);
+    margin: 0 0 12px 0;
+    font-weight: 800;
+    letter-spacing: 2px;
+  }
+  .group-teams {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .group-team {
+    background: #0f1530;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-align: center;
+    border-left: 3px solid var(--accent);
+  }
+  /* === Match cards === */
   .match {
     background: #0f1530;
     border-radius: 10px;
-    padding: 12px;
+    padding: 14px;
     margin-bottom: 10px;
     border-left: 3px solid var(--accent);
   }
@@ -124,38 +192,79 @@
     justify-content: space-between;
     font-size: 12px;
     color: var(--muted);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
   .teams {
     display: grid;
-    grid-template-columns: 1fr 70px 1fr;
+    grid-template-columns: 1fr 100px 1fr;
     align-items: center;
     gap: 8px;
   }
-  .team { text-align: center; font-weight: 600; font-size: 15px; }
+  .team {
+    text-align: center;
+    font-weight: 600;
+    font-size: 15px;
+    word-break: break-word;
+  }
   .score-input { display: flex; gap: 4px; justify-content: center; }
   .score-input input {
-    width: 42px;
+    width: 46px;
     text-align: center;
-    padding: 6px;
-    font-size: 18px;
+    padding: 8px;
+    font-size: 20px;
     font-weight: bold;
   }
-  .vs { text-align: center; color: var(--muted); font-size: 12px; }
   .result-badge {
     background: var(--green);
     color: white;
-    padding: 4px 10px;
+    padding: 6px 12px;
     border-radius: 6px;
     font-weight: bold;
     text-align: center;
+    font-size: 16px;
   }
+  /* === Ranking === */
   table { width: 100%; border-collapse: collapse; }
   th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
   th { color: var(--gold); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
   tr.me { background: rgba(255,210,74,0.1); }
   .rank { font-weight: bold; color: var(--gold); width: 30px; }
   .pts { font-weight: bold; color: var(--green); text-align: right; }
+  /* === Special predictions === */
+  .group-pick {
+    background: #0f1530;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .group-pick-title {
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .team-checks {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  .team-check {
+    background: #1a2348;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    text-align: center;
+    font-weight: 600;
+    user-select: none;
+    transition: all 0.15s;
+  }
+  .team-check:hover { background: #243064; }
+  .team-check.checked {
+    background: var(--gold);
+    color: #1a1a1a;
+    border-color: var(--gold);
+  }
+  /* === Misc === */
   .status { padding: 8px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 10px; }
   .status.ok { background: rgba(46,204,113,0.2); color: var(--green); }
   .status.err { background: rgba(255,92,92,0.2); color: var(--red); }
@@ -172,8 +281,14 @@
     letter-spacing: 2px;
     font-size: 11px;
   }
-  .filter-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-  .filter-bar select { flex: 1; }
+  .info-box {
+    background: rgba(79,140,255,0.15);
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
 </style>
 </head>
 <body>
@@ -185,10 +300,11 @@
 
 <nav>
   <button id="tab-predict" class="active" onclick="showTab('predict')">Mis Quinielas</button>
-  <button id="tab-rank" onclick="showTab('rank')">Tabla LAGROS</button>
-  <button id="tab-all" onclick="showTab('all')">Todas las Quinielas</button>
-  <button id="tab-rules" onclick="showTab('rules')">Reglas</button>
-  <button id="tab-admin" onclick="showTab('admin')">Admin</button>
+  <button id="tab-special" onclick="showTab('special')">⭐ Apuestas Especiales</button>
+  <button id="tab-rank" onclick="showTab('rank')">🏆 Tabla LAGROS</button>
+  <button id="tab-all" onclick="showTab('all')">👥 Todas las Quinielas</button>
+  <button id="tab-rules" onclick="showTab('rules')">📜 Reglas</button>
+  <button id="tab-admin" onclick="showTab('admin')">⚙️ Admin</button>
 </nav>
 
 <main>
@@ -221,29 +337,26 @@
     </div>
   </div>
 
-  <!-- TAB: PREDICT -->
+  <!-- TAB: PREDICT (matches by group) -->
   <div id="content-predict">
     <div class="card">
       <h2>📋 Tus Predicciones</h2>
-      <p class="small">Cargá tu marcador antes de que empiece cada partido. Después no se puede cambiar.</p>
-      <div class="filter-bar">
-        <select id="filter-stage" onchange="renderMatches()">
-          <option value="all">Todas las fases</option>
-          <option value="group">Fase de Grupos</option>
-          <option value="r32">Dieciseisavos</option>
-          <option value="r16">Octavos</option>
-          <option value="qf">Cuartos</option>
-          <option value="sf">Semifinal</option>
-          <option value="3rd">Tercer puesto</option>
-          <option value="final">Final</option>
-        </select>
-        <select id="filter-status" onchange="renderMatches()">
-          <option value="all">Todos</option>
-          <option value="open">Sin jugar</option>
-          <option value="played">Ya jugados</option>
-        </select>
-      </div>
+      <p class="small">Elegí un grupo o fase y cargá tus marcadores. Cada partido se cierra cuando empieza.</p>
+      <div class="stage-tabs" id="stage-tabs"></div>
       <div id="matches-list"></div>
+    </div>
+  </div>
+
+  <!-- TAB: SPECIAL (champion + group qualifiers) -->
+  <div id="content-special" class="hidden">
+    <div class="card">
+      <h2>⭐ Apuestas Especiales</h2>
+      <div class="info-box">
+        🏆 <strong>+5 puntos</strong> si acertás el campeón del Mundial<br>
+        ✅ <strong>+1 punto</strong> por cada equipo acertado que pase de fase de grupos (máx. 24 pts)<br>
+        <em style="opacity:0.8">Cargá tus apuestas antes de que empiece el Mundial.</em>
+      </div>
+      <div id="special-content"></div>
     </div>
   </div>
 
@@ -253,7 +366,7 @@
       <h2>🏆 Tabla de Posiciones LAGROS</h2>
       <table>
         <thead>
-          <tr><th>#</th><th>LAGRO</th><th>Exactos</th><th>Ganador</th><th class="pts">Puntos</th></tr>
+          <tr><th>#</th><th>LAGRO</th><th>Exactos</th><th>Ganador</th><th>Especiales</th><th class="pts">Total</th></tr>
         </thead>
         <tbody id="ranking-body"></tbody>
       </table>
@@ -263,8 +376,8 @@
   <!-- TAB: ALL -->
   <div id="content-all" class="hidden">
     <div class="card">
-      <h2>👥 Quinielas de todos</h2>
-      <p class="small">Acá podés chusmear las predicciones de los otros LAGROS.</p>
+      <h2>👥 Quinielas de todos los LAGROS</h2>
+      <p class="small">Acá podés chusmear las predicciones de los otros (solo partidos ya jugados o ya empezados).</p>
       <select id="filter-user" onchange="renderAllPredictions()" style="margin-bottom:12px"></select>
       <div id="all-predictions"></div>
     </div>
@@ -274,14 +387,22 @@
   <div id="content-rules" class="hidden">
     <div class="card">
       <h2>📜 Reglas de los LAGROS</h2>
+      <h3>Partidos</h3>
       <ul>
         <li><strong>3 puntos</strong> si acertás el marcador exacto (ej: 2-1 = 2-1)</li>
         <li><strong>1 punto</strong> si acertás el ganador o el empate, pero no el marcador</li>
         <li><strong>0 puntos</strong> si fallaste</li>
         <li>Si no cargaste predicción antes del partido → 0 puntos</li>
         <li>En partidos de eliminación: vale el resultado al final del tiempo reglamentario (90 min)</li>
-        <li>El que gana se lleva la gloria eterna 🏆</li>
       </ul>
+      <h3>Apuestas Especiales</h3>
+      <ul>
+        <li><strong>+5 puntos</strong> si acertás el campeón del Mundial</li>
+        <li><strong>+1 punto</strong> por cada equipo que clasifique de fase de grupos que hayas elegido (24 máx)</li>
+        <li>Las apuestas especiales se cierran al empezar el primer partido del Mundial</li>
+      </ul>
+      <h3>🏆 Premio</h3>
+      <p>El LAGRO que más puntos sume al final del Mundial se lleva la gloria eterna.</p>
     </div>
   </div>
 
@@ -289,14 +410,20 @@
   <div id="content-admin" class="hidden">
     <div id="admin-locked" class="card">
       <h2>🔒 Modo Admin</h2>
-      <p>Solo el admin (vos) puede agregar partidos y cargar resultados.</p>
+      <p>Solo el admin puede cargar partidos y resultados.</p>
       <label>Contraseña de admin</label>
       <input id="admin-pass" type="password" />
       <button class="primary" onclick="adminLogin()" style="margin-top:10px">Entrar</button>
     </div>
     <div id="admin-panel" class="hidden">
       <div class="card">
-        <h2>➕ Agregar partido</h2>
+        <h2>🌍 Carga Rápida</h2>
+        <p class="small">Click para crear automáticamente los 72 partidos de fase de grupos del Mundial 2026 con sus 12 grupos oficiales.</p>
+        <button class="big-load" onclick="adminLoadMundial2026()">🌍 Cargar Mundial 2026 (72 partidos)</button>
+        <p class="small" style="margin-top:10px">⚠️ Las fechas son aproximadas. Podés editar cada partido individualmente abajo.</p>
+      </div>
+      <div class="card">
+        <h2>➕ Agregar partido manual</h2>
         <div class="row">
           <div><label>Equipo 1</label><input id="adm-team1" /></div>
           <div><label>Equipo 2</label><input id="adm-team2" /></div>
@@ -314,17 +441,39 @@
               <option value="final">Final</option>
             </select>
           </div>
+          <div>
+            <label>Grupo (solo si es Grupos)</label>
+            <select id="adm-group">
+              <option value="">—</option>
+              <option>A</option><option>B</option><option>C</option><option>D</option>
+              <option>E</option><option>F</option><option>G</option><option>H</option>
+              <option>I</option><option>J</option><option>K</option><option>L</option>
+            </select>
+          </div>
           <div><label>Fecha y hora</label><input id="adm-date" type="datetime-local" /></div>
         </div>
         <button class="primary" style="margin-top:10px" onclick="adminAddMatch()">Agregar</button>
       </div>
       <div class="card">
-        <h2>🎯 Cargar resultados</h2>
+        <h2>🎯 Cargar resultados / Editar partidos</h2>
+        <p class="small">Cuando termine cada partido, ponés los goles y "Guardar". La tabla se actualiza sola.</p>
         <div id="admin-matches"></div>
+      </div>
+      <div class="card">
+        <h2>🏆 Resultados Apuestas Especiales</h2>
+        <p class="small">Cargá los resultados reales al final del Mundial.</p>
+        <label>Campeón del Mundial</label>
+        <input id="admin-champion" placeholder="Ej: Argentina" />
+        <div style="margin-top:10px">
+          <label>Equipos que pasaron de fase de grupos (separados por coma)</label>
+          <input id="admin-qualifiers" placeholder="Ej: México, Argentina, Brasil, ..." />
+        </div>
+        <button class="primary" style="margin-top:10px" onclick="adminSaveSpecial()">Guardar Resultados Especiales</button>
       </div>
       <div class="card">
         <h2>⚙️ Otros</h2>
         <button class="ghost" onclick="exportData()">Exportar datos (JSON)</button>
+        <button class="danger" onclick="adminDeleteAllMatches()" style="margin-left:8px">⚠️ Borrar todos los partidos</button>
       </div>
     </div>
   </div>
@@ -339,12 +488,9 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import {
-    getFirestore, initializeFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, query, orderBy
+    initializeFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, query, orderBy
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // ============================================================
-  // 🔧 CONFIG — Reemplazá con tu config de Firebase (ver README)
-  // ============================================================
   const firebaseConfig = {
     apiKey: "AIzaSyDtVnG1kcFQPMhJ834QTDpaR-3mZkpjsNI",
     authDomain: "quiniela-lagros.firebaseapp.com",
@@ -354,23 +500,45 @@
     appId: "1:836614288448:web:819ab1c3a7eea28f9adba5"
   };
 
-  const ADMIN_PASSWORD = "lagros2026"; // 🔐 cambiá esto
+  const ADMIN_PASSWORD = "lagros2026";
 
-  // ============================================================
   const app = initializeApp(firebaseConfig);
   const db = initializeFirestore(app, {
     experimentalForceLongPolling: true,
     useFetchStreams: false,
   }, "default");
 
+  // ============================================================
+  // Datos del Mundial 2026 (sorteo 5-dic-2025)
+  // ============================================================
+  const MUNDIAL_2026_GROUPS = {
+    A: ['México', 'Sudáfrica', 'Corea del Sur', 'R. Checa'],
+    B: ['Canadá', 'Bosnia', 'Catar', 'Suiza'],
+    C: ['Brasil', 'Marruecos', 'Haití', 'Escocia'],
+    D: ['Estados Unidos', 'Paraguay', 'Australia', 'Turquía'],
+    E: ['Alemania', 'Curazao', 'Costa de Marfil', 'Ecuador'],
+    F: ['Países Bajos', 'Japón', 'Suecia', 'Túnez'],
+    G: ['Bélgica', 'Egipto', 'Irán', 'Nueva Zelanda'],
+    H: ['España', 'Cabo Verde', 'Arabia Saudita', 'Uruguay'],
+    I: ['Francia', 'Senegal', 'Irak', 'Noruega'],
+    J: ['Argentina', 'Argelia', 'Austria', 'Jordania'],
+    K: ['Portugal', 'RD del Congo', 'Uzbekistán', 'Colombia'],
+    L: ['Inglaterra', 'Croacia', 'Ghana', 'Panamá']
+  };
+
   // Estado global
   let currentUser = null;
   let allUsers = {};
   let allMatches = [];
-  let allPredictions = {}; // { userId: { matchId: {h, a} } }
+  let allPredictions = {};
+  let allSpecials = {};
+  let specialResults = {};
   let isAdmin = false;
+  let activeStage = 'A'; // grupo o fase activa
 
-  // ---- Auth simple (nombre + PIN, guardado en localStorage) ----
+  // ============================================================
+  // Auth
+  // ============================================================
   window.register = async function() {
     const name = document.getElementById('login-name').value.trim();
     const pin = document.getElementById('login-pin').value.trim();
@@ -398,7 +566,7 @@
     document.getElementById('login-card').classList.add('hidden');
     document.getElementById('user-bar').classList.remove('hidden');
     document.getElementById('current-user-name').textContent = name;
-    renderMatches();
+    renderAll();
   }
   window.logout = function() {
     localStorage.removeItem('lagros_user');
@@ -406,7 +574,9 @@
     location.reload();
   };
 
-  // ---- Cargar datos en tiempo real ----
+  // ============================================================
+  // Listeners
+  // ============================================================
   onSnapshot(collection(db, 'users'), snap => {
     allUsers = {};
     snap.forEach(d => allUsers[d.id] = d.data());
@@ -416,10 +586,7 @@
   onSnapshot(query(collection(db, 'matches'), orderBy('date')), snap => {
     allMatches = [];
     snap.forEach(d => allMatches.push({ id: d.id, ...d.data() }));
-    renderMatches();
-    renderRanking();
-    renderAdminMatches();
-    renderAllPredictions();
+    renderAll();
   });
   onSnapshot(collection(db, 'predictions'), snap => {
     allPredictions = {};
@@ -432,23 +599,86 @@
     renderRanking();
     renderAllPredictions();
   });
+  onSnapshot(collection(db, 'specials'), snap => {
+    allSpecials = {};
+    snap.forEach(d => {
+      allSpecials[d.id] = d.data();
+    });
+    renderSpecial();
+    renderRanking();
+  });
+  onSnapshot(doc(db, 'config', 'specialResults'), snap => {
+    specialResults = snap.exists() ? snap.data() : {};
+    renderRanking();
+  });
 
-  // ---- Render: partidos ----
+  function renderAll() {
+    renderStageTabs();
+    renderMatches();
+    renderAdminMatches();
+    renderSpecial();
+    renderAllPredictions();
+  }
+
+  // ============================================================
+  // Stage tabs (Grupo A...L + Octavos...Final)
+  // ============================================================
+  function renderStageTabs() {
+    const wrap = document.getElementById('stage-tabs');
+    if (!wrap) return;
+    const stages = [
+      { key: 'A', label: 'Grupo A' }, { key: 'B', label: 'Grupo B' },
+      { key: 'C', label: 'Grupo C' }, { key: 'D', label: 'Grupo D' },
+      { key: 'E', label: 'Grupo E' }, { key: 'F', label: 'Grupo F' },
+      { key: 'G', label: 'Grupo G' }, { key: 'H', label: 'Grupo H' },
+      { key: 'I', label: 'Grupo I' }, { key: 'J', label: 'Grupo J' },
+      { key: 'K', label: 'Grupo K' }, { key: 'L', label: 'Grupo L' },
+      { key: 'r32', label: '16avos' }, { key: 'r16', label: 'Octavos' },
+      { key: 'qf', label: 'Cuartos' }, { key: 'sf', label: 'Semis' },
+      { key: '3rd', label: '3er Puesto' }, { key: 'final', label: 'FINAL' },
+    ];
+    wrap.innerHTML = stages.map(s =>
+      `<button onclick="setStage('${s.key}')" class="${activeStage === s.key ? 'active' : ''}">${s.label}</button>`
+    ).join('');
+  }
+
+  window.setStage = function(stage) {
+    activeStage = stage;
+    renderStageTabs();
+    renderMatches();
+  };
+
+  // ============================================================
+  // Render matches
+  // ============================================================
   function renderMatches() {
     const list = document.getElementById('matches-list');
     if (!list) return;
     if (!currentUser) { list.innerHTML = '<p class="small">Iniciá sesión para predecir.</p>'; return; }
-    const stageF = document.getElementById('filter-stage').value;
-    const statusF = document.getElementById('filter-status').value;
-    const filtered = allMatches.filter(m => {
-      if (stageF !== 'all' && m.stage !== stageF) return false;
-      const played = m.result && m.result.h != null;
-      if (statusF === 'open' && played) return false;
-      if (statusF === 'played' && !played) return false;
-      return true;
-    });
-    if (!filtered.length) { list.innerHTML = '<p class="small">No hay partidos en esta vista.</p>'; return; }
-    list.innerHTML = filtered.map(m => matchHTML(m)).join('');
+
+    const isGroup = ['A','B','C','D','E','F','G','H','I','J','K','L'].includes(activeStage);
+    let matches;
+    let header = '';
+
+    if (isGroup) {
+      matches = allMatches.filter(m => m.stage === 'group' && m.group === activeStage);
+      const teams = MUNDIAL_2026_GROUPS[activeStage] || [];
+      header = `<div class="group-card">
+        <h2 class="group-title">GRUPO ${activeStage}</h2>
+        <div class="group-teams">
+          ${teams.map(t => `<div class="group-team">${t}</div>`).join('')}
+        </div>
+        <div class="small">${matches.length} partidos</div>
+      </div>`;
+    } else {
+      matches = allMatches.filter(m => m.stage === activeStage);
+    }
+
+    if (!matches.length) {
+      list.innerHTML = header + '<p class="small">No hay partidos cargados todavía en esta fase.</p>';
+      return;
+    }
+    list.innerHTML = header + matches.map(m => matchHTML(m)).join('');
   }
 
   function matchHTML(m) {
@@ -457,7 +687,6 @@
     const locked = now >= matchTime;
     const played = m.result && m.result.h != null;
     const pred = allPredictions[currentUser.id]?.[m.id];
-    const stageLabel = stageName(m.stage);
     const date = new Date(m.date).toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
     let scoreSection;
     if (played) {
@@ -478,7 +707,7 @@
     }
     return `
       <div class="match ${played ? 'played' : (locked ? 'locked' : '')}">
-        <div class="match-header"><span>${stageLabel}</span><span>${date}</span></div>
+        <div class="match-header"><span>${stageName(m.stage)}${m.group ? ' · Grupo ' + m.group : ''}</span><span>${date}</span></div>
         <div class="teams">
           <div class="team">${m.team1}</div>
           <div>${scoreSection}</div>
@@ -497,13 +726,101 @@
     await setDoc(doc(db, 'predictions', `${currentUser.id}__${matchId}`), { h, a, ts: Date.now() });
   };
 
-  // ---- Ranking ----
+  // ============================================================
+  // Apuestas Especiales (Campeón + 2 por grupo)
+  // ============================================================
+  function renderSpecial() {
+    const wrap = document.getElementById('special-content');
+    if (!wrap) return;
+    if (!currentUser) { wrap.innerHTML = '<p class="small">Iniciá sesión para apostar.</p>'; return; }
+    const myBet = allSpecials[currentUser.id] || { champion: '', groupQualifiers: {} };
+    const mundialStarted = allMatches.some(m => m.stage === 'group' && new Date(m.date).getTime() <= Date.now());
+    const allTeams = Object.values(MUNDIAL_2026_GROUPS).flat();
+
+    let html = `<h3>🏆 Campeón del Mundial</h3>`;
+    if (mundialStarted) {
+      html += `<div class="small">🔒 Apuestas cerradas. Tu campeón: <strong>${myBet.champion || '—'}</strong></div>`;
+    } else {
+      html += `<select id="bet-champion" style="margin-bottom:14px">
+        <option value="">— Elegí tu campeón —</option>
+        ${allTeams.map(t => `<option value="${t}" ${myBet.champion === t ? 'selected' : ''}>${t}</option>`).join('')}
+      </select>`;
+    }
+
+    html += `<h3 style="margin-top:18px">✅ Equipos que pasan de cada grupo (elegí 2 por grupo)</h3>`;
+    Object.entries(MUNDIAL_2026_GROUPS).forEach(([g, teams]) => {
+      const picked = myBet.groupQualifiers[g] || [];
+      html += `<div class="group-pick">
+        <div class="group-pick-title">Grupo ${g}</div>
+        <div class="team-checks">
+          ${teams.map(t => `
+            <div class="team-check ${picked.includes(t) ? 'checked' : ''}"
+                 onclick="${mundialStarted ? '' : `toggleQualifier('${g}','${t.replace(/'/g, "\\'")}')`}">
+              ${t}
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+    });
+
+    if (!mundialStarted) {
+      html += `<button class="primary" style="margin-top:14px; width:100%" onclick="saveSpecial()">💾 Guardar Apuestas</button>`;
+    }
+    wrap.innerHTML = html;
+  }
+
+  window.toggleQualifier = function(group, team) {
+    if (!currentUser) return;
+    if (!allSpecials[currentUser.id]) allSpecials[currentUser.id] = { champion: '', groupQualifiers: {} };
+    const bet = allSpecials[currentUser.id];
+    if (!bet.groupQualifiers[group]) bet.groupQualifiers[group] = [];
+    const list = bet.groupQualifiers[group];
+    const idx = list.indexOf(team);
+    if (idx >= 0) list.splice(idx, 1);
+    else {
+      if (list.length >= 2) {
+        alert('Ya elegiste 2 equipos en este grupo. Desmarcá uno primero.');
+        return;
+      }
+      list.push(team);
+    }
+    renderSpecial();
+  };
+
+  window.saveSpecial = async function() {
+    if (!currentUser) return;
+    const champEl = document.getElementById('bet-champion');
+    const bet = allSpecials[currentUser.id] || { champion: '', groupQualifiers: {} };
+    if (champEl) bet.champion = champEl.value;
+    await setDoc(doc(db, 'specials', currentUser.id), bet);
+    alert('✅ Apuestas guardadas!');
+  };
+
+  // ============================================================
+  // Scoring
+  // ============================================================
   function computePoints(pred, result) {
     if (!pred || !result || result.h == null) return 0;
     if (pred.h === result.h && pred.a === result.a) return 3;
     const pw = pred.h > pred.a ? 1 : (pred.h < pred.a ? 2 : 0);
     const rw = result.h > result.a ? 1 : (result.h < result.a ? 2 : 0);
     return pw === rw ? 1 : 0;
+  }
+
+  function computeSpecialPoints(uid) {
+    const bet = allSpecials[uid];
+    if (!bet) return 0;
+    let pts = 0;
+    if (specialResults.champion && bet.champion === specialResults.champion) pts += 5;
+    const qualifiers = (specialResults.qualifiers || '').split(',').map(t => t.trim().toLowerCase());
+    if (qualifiers.length && bet.groupQualifiers) {
+      Object.values(bet.groupQualifiers).forEach(picks => {
+        picks.forEach(t => {
+          if (qualifiers.includes(t.toLowerCase())) pts += 1;
+        });
+      });
+    }
+    return pts;
   }
 
   function renderRanking() {
@@ -519,7 +836,8 @@
         else if (pp === 1) winner++;
         pts += pp;
       });
-      return { uid, name: allUsers[uid].name, pts, exact, winner };
+      const specPts = computeSpecialPoints(uid);
+      return { uid, name: allUsers[uid].name, pts: pts + specPts, exact, winner, specPts };
     }).sort((a, b) => b.pts - a.pts || b.exact - a.exact);
     body.innerHTML = rows.map((r, i) => `
       <tr class="${currentUser && r.uid === currentUser.id ? 'me' : ''}">
@@ -527,11 +845,14 @@
         <td>${r.name}</td>
         <td>${r.exact}</td>
         <td>${r.winner}</td>
+        <td>${r.specPts}</td>
         <td class="pts">${r.pts}</td>
-      </tr>`).join('') || '<tr><td colspan="5" class="small">Aún no hay LAGROS registrados.</td></tr>';
+      </tr>`).join('') || '<tr><td colspan="6" class="small">Aún no hay LAGROS registrados.</td></tr>';
   }
 
-  // ---- Ver predicciones de todos ----
+  // ============================================================
+  // Ver predicciones de otros
+  // ============================================================
   function populateUserFilter() {
     const sel = document.getElementById('filter-user');
     if (!sel) return;
@@ -547,48 +868,105 @@
     const uid = sel.value;
     if (!uid) { box.innerHTML = '<p class="small">Elegí un LAGRO arriba para ver sus predicciones.</p>'; return; }
     const preds = allPredictions[uid] || {};
-    box.innerHTML = allMatches.map(m => {
+    const userSpec = allSpecials[uid] || {};
+    let html = '';
+    if (userSpec.champion) html += `<div class="card"><strong>🏆 Campeón:</strong> ${userSpec.champion}</div>`;
+    html += allMatches.map(m => {
       const p = preds[m.id];
       const r = m.result;
       const played = r && r.h != null;
       const pts = played ? computePoints(p, r) : null;
       const now = Date.now();
       const locked = now >= new Date(m.date).getTime();
-      if (!locked && !p) return ''; // ocultar predicciones futuras de otros
+      if (!locked && !p) return '';
       return `<div class="match ${played ? 'played' : ''}" style="display:flex; justify-content:space-between; align-items:center">
-        <div>${m.team1} <strong>${p ? p.h + '-' + p.a : '—'}</strong> ${m.team2}</div>
+        <div>${m.team1} <strong>${p ? p.h + '-' + p.a : '—'}</strong> ${m.team2} ${m.group ? '<span class="small">[' + m.group + ']</span>' : ''}</div>
         <div class="small">${played ? `Real: ${r.h}-${r.a} · +${pts}` : (locked ? '🔒' : '')}</div>
       </div>`;
-    }).filter(x=>x).join('') || '<p class="small">Sin predicciones todavía.</p>';
+    }).filter(x=>x).join('');
+    box.innerHTML = html || '<p class="small">Sin predicciones todavía.</p>';
   };
 
-  // ---- Admin ----
+  // ============================================================
+  // Admin
+  // ============================================================
   window.adminLogin = function() {
     if (document.getElementById('admin-pass').value === ADMIN_PASSWORD) {
       isAdmin = true;
       document.getElementById('admin-locked').classList.add('hidden');
       document.getElementById('admin-panel').classList.remove('hidden');
       renderAdminMatches();
+      // pre-load champion / qualifiers fields
+      if (specialResults.champion) document.getElementById('admin-champion').value = specialResults.champion;
+      if (specialResults.qualifiers) document.getElementById('admin-qualifiers').value = specialResults.qualifiers;
     } else alert('Contraseña incorrecta');
   };
+
+  window.adminLoadMundial2026 = async function() {
+    if (!confirm('¿Cargar los 72 partidos de fase de grupos del Mundial 2026? Esto puede tomar un minuto. Si ya hay partidos cargados, se SUMAN (no se reemplazan).')) return;
+    let count = 0;
+    const groupKeys = Object.keys(MUNDIAL_2026_GROUPS);
+    // round-robin: enfrentamientos por matchday
+    const mdPairs = [
+      [[0,1],[2,3]], // MD1
+      [[0,2],[1,3]], // MD2
+      [[0,3],[1,2]], // MD3
+    ];
+    // dates: spread roughly across June 11-27, 2026
+    // For each matchday, all 12 groups play within ~4-5 days
+    const mdStartDates = [
+      new Date('2026-06-11T12:00:00'), // MD1
+      new Date('2026-06-17T12:00:00'), // MD2
+      new Date('2026-06-22T12:00:00'), // MD3
+    ];
+    for (let gi = 0; gi < groupKeys.length; gi++) {
+      const groupKey = groupKeys[gi];
+      const teams = MUNDIAL_2026_GROUPS[groupKey];
+      for (let md = 0; md < 3; md++) {
+        for (let mi = 0; mi < 2; mi++) {
+          const [a, b] = mdPairs[md][mi];
+          const dateBase = new Date(mdStartDates[md]);
+          const dayOffset = Math.floor(gi / 3); // 3 groups per day
+          const hour = 12 + ((gi % 3) * 3) + (mi * 1); // 12,13,15,16,18,19
+          dateBase.setDate(dateBase.getDate() + dayOffset);
+          dateBase.setHours(hour, 0, 0, 0);
+          const id = `m_${groupKey}_md${md+1}_${mi+1}`;
+          await setDoc(doc(db, 'matches', id), {
+            team1: teams[a],
+            team2: teams[b],
+            stage: 'group',
+            group: groupKey,
+            date: dateBase.toISOString()
+          });
+          count++;
+        }
+      }
+    }
+    alert(`✅ ${count} partidos cargados! Andá a Mis Quinielas para verlos.`);
+  };
+
   window.adminAddMatch = async function() {
     const t1 = document.getElementById('adm-team1').value.trim();
     const t2 = document.getElementById('adm-team2').value.trim();
     const stage = document.getElementById('adm-stage').value;
+    const group = document.getElementById('adm-group').value;
     const date = document.getElementById('adm-date').value;
-    if (!t1 || !t2 || !date) return alert('Completá todos los campos');
+    if (!t1 || !t2 || !date) return alert('Completá equipos y fecha');
     const id = 'm_' + Date.now();
-    await setDoc(doc(db, 'matches', id), { team1: t1, team2: t2, stage, date: new Date(date).toISOString() });
+    const data = { team1: t1, team2: t2, stage, date: new Date(date).toISOString() };
+    if (group) data.group = group;
+    await setDoc(doc(db, 'matches', id), data);
     document.getElementById('adm-team1').value = '';
     document.getElementById('adm-team2').value = '';
   };
+
   function renderAdminMatches() {
     const box = document.getElementById('admin-matches');
     if (!box || !isAdmin) return;
     box.innerHTML = allMatches.map(m => {
       const r = m.result || {};
       return `<div class="match">
-        <div class="match-header"><span>${stageName(m.stage)}</span><span>${new Date(m.date).toLocaleString('es-AR')}</span></div>
+        <div class="match-header"><span>${stageName(m.stage)}${m.group ? ' · Grupo ' + m.group : ''}</span><span>${new Date(m.date).toLocaleString('es-AR')}</span></div>
         <div class="teams">
           <div class="team">${m.team1}</div>
           <div class="score-input">
@@ -602,8 +980,9 @@
           <button class="danger" onclick="adminDeleteMatch('${m.id}')">Borrar</button>
         </div>
       </div>`;
-    }).join('') || '<p class="small">No hay partidos. Agregá el primero arriba.</p>';
+    }).join('') || '<p class="small">No hay partidos. Usá el botón "Cargar Mundial 2026" arriba.</p>';
   }
+
   window.adminSaveResult = async function(mid) {
     const h = parseInt(document.getElementById(`r-${mid}-h`).value);
     const a = parseInt(document.getElementById(`r-${mid}-a`).value);
@@ -615,8 +994,22 @@
     if (!confirm('¿Borrar este partido?')) return;
     await deleteDoc(doc(db, 'matches', mid));
   };
+  window.adminDeleteAllMatches = async function() {
+    if (!confirm('⚠️ ¿BORRAR TODOS los partidos? Esto no se puede deshacer.')) return;
+    if (!confirm('Confirmá de nuevo. Se borran todos.')) return;
+    for (const m of allMatches) {
+      await deleteDoc(doc(db, 'matches', m.id));
+    }
+    alert('Borrados');
+  };
+  window.adminSaveSpecial = async function() {
+    const champion = document.getElementById('admin-champion').value.trim();
+    const qualifiers = document.getElementById('admin-qualifiers').value.trim();
+    await setDoc(doc(db, 'config', 'specialResults'), { champion, qualifiers });
+    alert('✅ Resultados especiales guardados');
+  };
   window.exportData = function() {
-    const data = { users: allUsers, matches: allMatches, predictions: allPredictions };
+    const data = { users: allUsers, matches: allMatches, predictions: allPredictions, specials: allSpecials, specialResults };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -624,9 +1017,11 @@
     a.click();
   };
 
-  // ---- Helpers ----
+  // ============================================================
+  // Helpers
+  // ============================================================
   function stageName(s) {
-    return { group: 'Grupos', r32: 'Dieciseisavos', r16: 'Octavos', qf: 'Cuartos', sf: 'Semifinal', '3rd': '3er Puesto', final: 'FINAL' }[s] || s;
+    return { group: 'Grupos', r32: '16avos', r16: 'Octavos', qf: 'Cuartos', sf: 'Semifinal', '3rd': '3er Puesto', final: 'FINAL' }[s] || s;
   }
   function setStatus(id, msg, cls) {
     const el = document.getElementById(id);
@@ -634,18 +1029,21 @@
     setTimeout(() => el.innerHTML = '', 4000);
   }
   window.showTab = function(name) {
-    ['predict','rank','all','rules','admin'].forEach(n => {
+    ['predict','special','rank','all','rules','admin'].forEach(n => {
       document.getElementById('content-' + n).classList.toggle('hidden', n !== name);
       document.getElementById('tab-' + n).classList.toggle('active', n === name);
     });
     if (name === 'all') renderAllPredictions();
+    if (name === 'special') renderSpecial();
   };
 
-  // ---- Auto-login ----
+  // Auto-login
   const saved = localStorage.getItem('lagros_user');
   if (saved) {
     const u = JSON.parse(saved);
     loginAs(u.id, u.name);
+  } else {
+    renderStageTabs();
   }
 </script>
 
