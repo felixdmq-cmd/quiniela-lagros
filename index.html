@@ -361,7 +361,7 @@
   const db = initializeFirestore(app, {
     experimentalForceLongPolling: true,
     useFetchStreams: false,
-  });
+  }, "default");
 
   // Estado global
   let currentUser = null;
