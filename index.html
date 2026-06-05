@@ -423,6 +423,13 @@
         <p class="small" style="margin-top:10px">⚠️ Las fechas son aproximadas. Podés editar cada partido individualmente abajo.</p>
       </div>
       <div class="card">
+        <h2>🏗️ Bracket Eliminatorio</h2>
+        <p class="small">Una vez terminada la fase de grupos (los 72 partidos con resultados), click para generar automáticamente los 16 partidos de 16avos con los cruces oficiales FIFA 2026 (1°A vs 3° de XYZ, 2°A vs 2°B, etc).</p>
+        <button class="big-load" onclick="adminGenerateBracket()">🏗️ Generar 16avos de Final</button>
+        <div id="qualifiers-preview" style="margin-top:14px"></div>
+        <p class="small" style="margin-top:10px">💡 Después, a medida que cargues los resultados de 16avos, los ganadores pasan SOLOS a octavos. Igual para cuartos, semis y final.</p>
+      </div>
+      <div class="card">
         <h2>➕ Agregar partido manual</h2>
         <div class="row">
           <div><label>Equipo 1</label><input id="adm-team1" /></div>
@@ -526,6 +533,27 @@
     L: ['Inglaterra', 'Croacia', 'Ghana', 'Panamá']
   };
 
+  // Bracket oficial FIFA 2026 - Round of 32 (16avos)
+  // Para 3°s: lista de grupos elegibles (se asigna el mejor disponible que no haya sido usado)
+  const R32_BRACKET = [
+    { slot1: '1E', slot2: { thirdFrom: 'ABCDF' } },
+    { slot1: '1I', slot2: { thirdFrom: 'CDFGH' } },
+    { slot1: '2A', slot2: '2B' },
+    { slot1: '1F', slot2: '2C' },
+    { slot1: '2K', slot2: '2L' },
+    { slot1: '1H', slot2: '2J' },
+    { slot1: '1D', slot2: { thirdFrom: 'BEFIJ' } },
+    { slot1: '1G', slot2: { thirdFrom: 'AEHIJ' } },
+    { slot1: '1C', slot2: '2F' },
+    { slot1: '2E', slot2: '2I' },
+    { slot1: '1A', slot2: { thirdFrom: 'CEFHI' } },
+    { slot1: '1L', slot2: { thirdFrom: 'EHIJK' } },
+    { slot1: '1J', slot2: '2H' },
+    { slot1: '2D', slot2: '2G' },
+    { slot1: '1B', slot2: { thirdFrom: 'EFGIJ' } },
+    { slot1: '1K', slot2: { thirdFrom: 'DEIJL' } },
+  ];
+
   // Estado global
   let currentUser = null;
   let allUsers = {};
@@ -621,6 +649,62 @@
   }
 
   // ============================================================
+  // Tabla de grupos (auto-calculada con resultados)
+  // ============================================================
+  function getGroupStandings(group) {
+    const teams = MUNDIAL_2026_GROUPS[group] || [];
+    const stats = {};
+    teams.forEach(t => stats[t] = { team: t, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0, dg: 0, pts: 0 });
+    const gm = allMatches.filter(m => m.stage === 'group' && m.group === group && m.result && m.result.h != null);
+    gm.forEach(m => {
+      const t1 = stats[m.team1], t2 = stats[m.team2];
+      if (!t1 || !t2) return;
+      t1.pj++; t2.pj++;
+      t1.gf += m.result.h; t1.gc += m.result.a;
+      t2.gf += m.result.a; t2.gc += m.result.h;
+      if (m.result.h > m.result.a) { t1.g++; t1.pts += 3; t2.p++; }
+      else if (m.result.h < m.result.a) { t2.g++; t2.pts += 3; t1.p++; }
+      else { t1.e++; t2.e++; t1.pts++; t2.pts++; }
+    });
+    Object.values(stats).forEach(s => s.dg = s.gf - s.gc);
+    return Object.values(stats).sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf);
+  }
+
+  function getQualifiers() {
+    const first = {}, second = {}, thirds = [];
+    let allComplete = true;
+    Object.keys(MUNDIAL_2026_GROUPS).forEach(g => {
+      const st = getGroupStandings(g);
+      const groupMatches = allMatches.filter(m => m.stage === 'group' && m.group === g);
+      const playedAll = groupMatches.length === 6 && groupMatches.every(m => m.result && m.result.h != null);
+      if (!playedAll) allComplete = false;
+      first[g] = st[0]?.team;
+      second[g] = st[1]?.team;
+      if (st[2]) thirds.push({ ...st[2], group: g });
+    });
+    const best8 = thirds.sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf).slice(0, 8);
+    return { first, second, best8, allComplete };
+  }
+
+  function resolveBracketSlot(slot, q, usedThirds) {
+    if (typeof slot === 'string') {
+      if (slot[0] === '1') return q.first[slot[1]] || slot;
+      if (slot[0] === '2') return q.second[slot[1]] || slot;
+    } else if (slot.thirdFrom) {
+      const allowed = slot.thirdFrom.split('');
+      const available = q.best8.filter(t => allowed.includes(t.group) && !usedThirds.has(t.team));
+      if (available.length) {
+        usedThirds.add(available[0].team);
+        return available[0].team;
+      }
+      // fallback: cualquier mejor 3° no usado
+      const fallback = q.best8.find(t => !usedThirds.has(t.team));
+      if (fallback) { usedThirds.add(fallback.team); return fallback.team; }
+    }
+    return '?';
+  }
+
+  // ============================================================
   // Stage tabs (Grupo A...L + Octavos...Final)
   // ============================================================
   function renderStageTabs() {
@@ -663,12 +747,28 @@
     if (isGroup) {
       matches = allMatches.filter(m => m.stage === 'group' && m.group === activeStage);
       const teams = MUNDIAL_2026_GROUPS[activeStage] || [];
+      const standings = getGroupStandings(activeStage);
+      const tableHTML = `
+        <table style="margin-top:10px; font-size:13px">
+          <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th class="pts">Pts</th></tr></thead>
+          <tbody>
+          ${standings.map((s, i) => `
+            <tr>
+              <td class="rank">${i+1}</td>
+              <td><strong>${s.team}</strong></td>
+              <td>${s.pj}</td><td>${s.g}</td><td>${s.e}</td><td>${s.p}</td>
+              <td>${s.gf}</td><td>${s.gc}</td><td>${s.dg > 0 ? '+' + s.dg : s.dg}</td>
+              <td class="pts">${s.pts}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
       header = `<div class="group-card">
         <h2 class="group-title">GRUPO ${activeStage}</h2>
         <div class="group-teams">
           ${teams.map(t => `<div class="group-team">${t}</div>`).join('')}
         </div>
-        <div class="small">${matches.length} partidos</div>
+        ${tableHTML}
+        <div class="small" style="margin-top:8px">Top 2 clasifican directo. 3° puede clasificar como mejor tercero.</div>
       </div>`;
     } else {
       matches = allMatches.filter(m => m.stage === activeStage);
@@ -961,6 +1061,7 @@
   };
 
   function renderAdminMatches() {
+    renderQualifiersPreview();
     const box = document.getElementById('admin-matches');
     if (!box || !isAdmin) return;
     box.innerHTML = allMatches.map(m => {
@@ -989,7 +1090,93 @@
     if (isNaN(h) || isNaN(a)) return alert('Completá ambos');
     const m = allMatches.find(x => x.id === mid);
     await setDoc(doc(db, 'matches', mid), { ...m, result: { h, a } });
+    // Auto-avance del ganador a la siguiente ronda (eliminatorias)
+    if (h !== a && ['r32','r16','qf','sf'].includes(m.stage)) {
+      await advanceWinner(m, h > a ? m.team1 : m.team2);
+    } else if (h === a && ['r32','r16','qf','sf','3rd','final'].includes(m.stage)) {
+      alert('⚠️ Empate en eliminación. Cargá quién ganó por penales editando los goles (ej: 2-1) o agregá el ganador manualmente en la siguiente ronda.');
+    }
   };
+
+  async function advanceWinner(match, winner) {
+    // Estructura de avance:
+    //  r32 (matches m_r32_1..16) -> r16 (m_r16_1..8): pares 1+2, 3+4, ...
+    //  r16 -> qf: 1+2, 3+4, 5+6, 7+8
+    //  qf -> sf: 1+2, 3+4
+    //  sf -> final (winners) + 3rd (losers)
+    const order = ['r32','r16','qf','sf'];
+    const nextStage = { r32:'r16', r16:'qf', qf:'sf', sf:'final' }[match.stage];
+    if (!nextStage) return;
+    const num = parseInt(match.id.replace(/^m_(r32|r16|qf|sf)_/, ''));
+    if (isNaN(num)) return;
+    const nextNum = Math.ceil(num / 2);
+    const isFirstSlot = num % 2 === 1; // 1->slot1, 2->slot2, 3->slot1, 4->slot2...
+    const nextId = `m_${nextStage}_${nextNum}`;
+    const existing = allMatches.find(x => x.id === nextId);
+    const next = existing || { id: nextId, stage: nextStage, team1: '?', team2: '?', date: getDefaultKnockoutDate(nextStage, nextNum) };
+    if (isFirstSlot) next.team1 = winner; else next.team2 = winner;
+    delete next.id;
+    await setDoc(doc(db, 'matches', nextId), next);
+    // Caso especial: SF -> 3er puesto con los perdedores
+    if (match.stage === 'sf') {
+      const loser = winner === match.team1 ? match.team2 : match.team1;
+      const thirdId = 'm_3rd_1';
+      const existing3 = allMatches.find(x => x.id === thirdId);
+      const t = existing3 || { id: thirdId, stage: '3rd', team1: '?', team2: '?', date: getDefaultKnockoutDate('3rd', 1) };
+      if (isFirstSlot) t.team1 = loser; else t.team2 = loser;
+      delete t.id;
+      await setDoc(doc(db, 'matches', thirdId), t);
+    }
+  }
+
+  function getDefaultKnockoutDate(stage, num) {
+    const map = {
+      r16: new Date('2026-07-04T15:00:00'),
+      qf: new Date('2026-07-09T15:00:00'),
+      sf: new Date('2026-07-14T15:00:00'),
+      '3rd': new Date('2026-07-18T15:00:00'),
+      final: new Date('2026-07-19T15:00:00'),
+    };
+    const d = new Date(map[stage] || new Date('2026-07-01T15:00:00'));
+    d.setDate(d.getDate() + (num - 1));
+    return d.toISOString();
+  }
+
+  window.adminGenerateBracket = async function() {
+    const q = getQualifiers();
+    if (!q.allComplete) {
+      if (!confirm('⚠️ Todavía hay partidos de grupos sin resultado. ¿Querés generar igual el bracket con lo que hay? Los espacios sin definir quedarán como "?".')) return;
+    }
+    if (!confirm('Se van a crear 16 partidos de 16avos con los cruces oficiales FIFA 2026. ¿Continuar?')) return;
+    const usedThirds = new Set();
+    const startDate = new Date('2026-06-28T12:00:00');
+    for (let i = 0; i < R32_BRACKET.length; i++) {
+      const b = R32_BRACKET[i];
+      const team1 = resolveBracketSlot(b.slot1, q, usedThirds);
+      const team2 = resolveBracketSlot(b.slot2, q, usedThirds);
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + Math.floor(i / 2));
+      d.setHours(12 + (i % 2) * 4);
+      await setDoc(doc(db, 'matches', `m_r32_${i+1}`), {
+        team1, team2, stage: 'r32', date: d.toISOString()
+      });
+    }
+    alert('✅ 16 partidos de 16avos creados. Andá a "Mis Quinielas" → "16avos" para verlos.');
+  };
+
+  function renderQualifiersPreview() {
+    const box = document.getElementById('qualifiers-preview');
+    if (!box || !isAdmin) return;
+    const q = getQualifiers();
+    let html = '<h3 style="font-size:14px; margin:0 0 8px 0">📊 Clasificados (en vivo)</h3>';
+    html += '<div style="font-size:12px"><strong>1° de grupo:</strong> ' +
+      Object.entries(q.first).map(([g, t]) => `${g}:${t || '?'}`).join(' · ') + '</div>';
+    html += '<div style="font-size:12px; margin-top:4px"><strong>2° de grupo:</strong> ' +
+      Object.entries(q.second).map(([g, t]) => `${g}:${t || '?'}`).join(' · ') + '</div>';
+    html += '<div style="font-size:12px; margin-top:4px"><strong>8 mejores 3°:</strong> ' +
+      q.best8.map(t => `${t.team} (${t.group}, ${t.pts}pts)`).join(' · ') + '</div>';
+    box.innerHTML = html;
+  }
   window.adminDeleteMatch = async function(mid) {
     if (!confirm('¿Borrar este partido?')) return;
     await deleteDoc(doc(db, 'matches', mid));
