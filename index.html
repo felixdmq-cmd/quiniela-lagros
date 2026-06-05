@@ -331,10 +331,14 @@
   </div>
 
   <div id="user-bar" class="card hidden">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <div>Conectado como: <strong id="current-user-name" style="color:var(--gold)"></strong></div>
-      <button class="ghost" onclick="logout()">Salir</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px">
+      <div>Conectado como: <strong id="current-user-name" style="color:var(--gold)"></strong> <span id="user-lock-status"></span></div>
+      <div style="display:flex; gap:6px">
+        <button id="lock-btn" class="primary" onclick="lockMyQuiniela()" style="padding:8px 14px; font-size:13px">🔒 Cerrar mi Quiniela</button>
+        <button class="ghost" onclick="logout()">Salir</button>
+      </div>
     </div>
+    <div id="lock-info" class="small" style="margin-top:8px"></div>
   </div>
 
   <!-- TAB: PREDICT (matches by group) -->
@@ -623,6 +627,7 @@
       if (!allPredictions[uid]) allPredictions[uid] = {};
       allPredictions[uid][mid] = d.data();
     });
+    _myBracketCache = null; // invalidar bracket cache
     renderMatches();
     renderRanking();
     renderAllPredictions();
@@ -641,6 +646,7 @@
   });
 
   function renderAll() {
+    updateLockUI();
     renderStageTabs();
     renderMatches();
     renderAdminMatches();
@@ -684,6 +690,104 @@
     });
     const best8 = thirds.sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf).slice(0, 8);
     return { first, second, best8, allComplete };
+  }
+
+  // ============================================================
+  // Bracket personal de cada usuario (basado en SUS predicciones)
+  // ============================================================
+  function getUserGroupStandings(uid, group) {
+    const teams = MUNDIAL_2026_GROUPS[group] || [];
+    const stats = {};
+    teams.forEach(t => stats[t] = { team: t, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0, dg: 0, pts: 0 });
+    const gm = allMatches.filter(m => m.stage === 'group' && m.group === group);
+    gm.forEach(m => {
+      const p = allPredictions[uid]?.[m.id];
+      if (!p || p.h == null) return;
+      const t1 = stats[m.team1], t2 = stats[m.team2];
+      if (!t1 || !t2) return;
+      t1.pj++; t2.pj++;
+      t1.gf += p.h; t1.gc += p.a;
+      t2.gf += p.a; t2.gc += p.h;
+      if (p.h > p.a) { t1.g++; t1.pts += 3; t2.p++; }
+      else if (p.h < p.a) { t2.g++; t2.pts += 3; t1.p++; }
+      else { t1.e++; t2.e++; t1.pts++; t2.pts++; }
+    });
+    Object.values(stats).forEach(s => s.dg = s.gf - s.gc);
+    return Object.values(stats).sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf);
+  }
+
+  function getUserQualifiers(uid) {
+    const first = {}, second = {}, thirds = [];
+    Object.keys(MUNDIAL_2026_GROUPS).forEach(g => {
+      const st = getUserGroupStandings(uid, g);
+      if (st[0] && st[0].pj > 0) first[g] = st[0].team;
+      if (st[1] && st[1].pj > 0) second[g] = st[1].team;
+      if (st[2] && st[2].pj > 0) thirds.push({ ...st[2], group: g });
+    });
+    const best8 = thirds.sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf).slice(0, 8);
+    return { first, second, best8 };
+  }
+
+  function getUserBracket(uid) {
+    const result = {};
+    if (!uid) return result;
+    const q = getUserQualifiers(uid);
+    const usedThirds = new Set();
+    const r32Winners = {};
+    for (let i = 0; i < R32_BRACKET.length; i++) {
+      const b = R32_BRACKET[i];
+      const team1 = resolveBracketSlot(b.slot1, q, usedThirds);
+      const team2 = resolveBracketSlot(b.slot2, q, usedThirds);
+      const mid = `m_r32_${i+1}`;
+      result[mid] = { team1: team1 === '?' ? slotToText(b.slot1) : team1, team2: team2 === '?' ? slotToText(b.slot2) : team2 };
+      const p = allPredictions[uid]?.[mid];
+      if (p && p.h != null && team1 !== '?' && team2 !== '?') {
+        r32Winners[i+1] = p.h >= p.a ? team1 : team2;
+      }
+    }
+    const r16Winners = {};
+    for (let i = 1; i <= 8; i++) {
+      const m1 = r32Winners[i*2-1];
+      const m2 = r32Winners[i*2];
+      const mid = `m_r16_${i}`;
+      result[mid] = { team1: m1 || `Gan. 16avos #${i*2-1}`, team2: m2 || `Gan. 16avos #${i*2}` };
+      const p = allPredictions[uid]?.[mid];
+      if (p && p.h != null && m1 && m2) {
+        r16Winners[i] = p.h >= p.a ? m1 : m2;
+      }
+    }
+    const qfWinners = {};
+    for (let i = 1; i <= 4; i++) {
+      const m1 = r16Winners[i*2-1];
+      const m2 = r16Winners[i*2];
+      const mid = `m_qf_${i}`;
+      result[mid] = { team1: m1 || `Gan. Octavos #${i*2-1}`, team2: m2 || `Gan. Octavos #${i*2}` };
+      const p = allPredictions[uid]?.[mid];
+      if (p && p.h != null && m1 && m2) {
+        qfWinners[i] = p.h >= p.a ? m1 : m2;
+      }
+    }
+    const sfWinners = {}, sfLosers = {};
+    for (let i = 1; i <= 2; i++) {
+      const m1 = qfWinners[i*2-1];
+      const m2 = qfWinners[i*2];
+      const mid = `m_sf_${i}`;
+      result[mid] = { team1: m1 || `Gan. Cuartos #${i*2-1}`, team2: m2 || `Gan. Cuartos #${i*2}` };
+      const p = allPredictions[uid]?.[mid];
+      if (p && p.h != null && m1 && m2) {
+        sfWinners[i] = p.h >= p.a ? m1 : m2;
+        sfLosers[i] = p.h >= p.a ? m2 : m1;
+      }
+    }
+    result['m_3rd_1'] = {
+      team1: sfLosers[1] || 'Perdedor Semi #1',
+      team2: sfLosers[2] || 'Perdedor Semi #2',
+    };
+    result['m_final_1'] = {
+      team1: sfWinners[1] || 'Ganador Semi #1',
+      team2: sfWinners[2] || 'Ganador Semi #2',
+    };
+    return result;
   }
 
   function resolveBracketSlot(slot, q, usedThirds) {
@@ -772,6 +876,11 @@
       </div>`;
     } else {
       matches = allMatches.filter(m => m.stage === activeStage);
+      const stageNameMap = { r32: '16avos de Final', r16: 'Octavos de Final', qf: 'Cuartos de Final', sf: 'Semifinales', '3rd': 'Tercer Puesto', final: 'FINAL' };
+      header = `<div class="group-card">
+        <h2 class="group-title">${stageNameMap[activeStage] || activeStage.toUpperCase()}</h2>
+        <div class="info-box" style="margin-top:8px">💡 <strong>Este es TU bracket personal</strong> — los equipos que ves acá son los que VOS predijiste que llegarían a esta fase (según tus marcadores de grupos y rondas anteriores). Si todavía no cargaste predicciones de la fase anterior, vas a ver placeholders como "Ganador 16avos #1". Carga primero los grupos y los 16avos para ver tu bracket completo.</div>
+      </div>`;
     }
 
     if (!matches.length) {
@@ -781,12 +890,32 @@
     list.innerHTML = header + matches.map(m => matchHTML(m)).join('');
   }
 
+  let _myBracketCache = null;
+  let _myBracketCacheTime = 0;
+  function getMyBracket() {
+    if (!currentUser) return {};
+    if (_myBracketCache && Date.now() - _myBracketCacheTime < 1000) return _myBracketCache;
+    _myBracketCache = getUserBracket(currentUser.id);
+    _myBracketCacheTime = Date.now();
+    return _myBracketCache;
+  }
+
   function matchHTML(m) {
     const now = Date.now();
     const matchTime = new Date(m.date).getTime();
-    const locked = now >= matchTime;
+    const userLocked = isMyQuinielaLocked();
+    const locked = userLocked || now >= matchTime;
     const played = m.result && m.result.h != null;
     const pred = allPredictions[currentUser.id]?.[m.id];
+    // Para eliminatorias: usar el bracket personal del usuario (basado en SUS predicciones)
+    let displayTeam1 = m.team1, displayTeam2 = m.team2;
+    if (['r32','r16','qf','sf','3rd','final'].includes(m.stage)) {
+      const mb = getMyBracket();
+      if (mb[m.id]) {
+        displayTeam1 = mb[m.id].team1;
+        displayTeam2 = mb[m.id].team2;
+      }
+    }
     const date = new Date(m.date).toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
     let scoreSection;
     if (played) {
@@ -809,15 +938,16 @@
       <div class="match ${played ? 'played' : (locked ? 'locked' : '')}">
         <div class="match-header"><span>${stageName(m.stage)}${m.group ? ' · Grupo ' + m.group : ''}</span><span>${date}</span></div>
         <div class="teams">
-          <div class="team">${m.team1}</div>
+          <div class="team">${displayTeam1}</div>
           <div>${scoreSection}</div>
-          <div class="team">${m.team2}</div>
+          <div class="team">${displayTeam2}</div>
         </div>
       </div>`;
   }
 
   window.savePred = async function(matchId) {
     if (!currentUser) return;
+    if (isMyQuinielaLocked()) return alert('🔒 Tu quiniela ya está bloqueada. No podés modificar.');
     const m = allMatches.find(x => x.id === matchId);
     if (new Date(m.date).getTime() <= Date.now()) return alert('Ya empezó el partido');
     const h = parseInt(document.getElementById(`p-${matchId}-h`).value);
@@ -825,6 +955,55 @@
     if (isNaN(h) || isNaN(a)) return alert('Cargá ambos goles');
     await setDoc(doc(db, 'predictions', `${currentUser.id}__${matchId}`), { h, a, ts: Date.now() });
   };
+
+  function isMyQuinielaLocked() {
+    if (!currentUser) return false;
+    return allUsers[currentUser.id]?.locked === true;
+  }
+
+  function isMundialStarted() {
+    return allMatches.some(m => m.stage === 'group' && new Date(m.date).getTime() <= Date.now());
+  }
+
+  window.lockMyQuiniela = async function() {
+    if (!currentUser) return;
+    if (isMyQuinielaLocked()) return alert('Tu quiniela ya está bloqueada.');
+    const totalMatches = allMatches.filter(m => m.stage === 'group').length;
+    const myPreds = Object.keys(allPredictions[currentUser.id] || {}).length;
+    const mySpecial = allSpecials[currentUser.id];
+    const hasChamp = mySpecial?.champion;
+    const totalQualifs = Object.values(mySpecial?.groupQualifiers || {}).reduce((a, b) => a + b.length, 0);
+    let warn = '';
+    if (myPreds < totalMatches) warn += `\n⚠️ Solo cargaste ${myPreds} de ${totalMatches} partidos de grupos.`;
+    if (!hasChamp) warn += `\n⚠️ No elegiste campeón.`;
+    if (totalQualifs < 24) warn += `\n⚠️ Solo elegiste ${totalQualifs} de 24 clasificados.`;
+    const msg = `¿Cerrar tu quiniela DEFINITIVAMENTE? No vas a poder modificar nada más.${warn}`;
+    if (!confirm(msg)) return;
+    await setDoc(doc(db, 'users', currentUser.id), { ...allUsers[currentUser.id], locked: true, lockedAt: Date.now() });
+    alert('🔒 ¡Quiniela cerrada! Que tengas suerte LAGRO.');
+  };
+
+  function updateLockUI() {
+    const btn = document.getElementById('lock-btn');
+    const status = document.getElementById('user-lock-status');
+    const info = document.getElementById('lock-info');
+    if (!btn || !currentUser) return;
+    const locked = isMyQuinielaLocked();
+    const started = isMundialStarted();
+    if (locked) {
+      btn.style.display = 'none';
+      status.innerHTML = ' · <span style="color:var(--red); font-weight:bold">🔒 CERRADA</span>';
+      info.textContent = 'Tu quiniela está bloqueada. La tabla se actualizará con cada resultado.';
+    } else if (started) {
+      btn.style.display = 'none';
+      status.innerHTML = ' · <span style="color:var(--red)">🔒 MUNDIAL EN JUEGO</span>';
+      info.textContent = 'El Mundial ya empezó. Las predicciones de partidos en curso o jugados están bloqueadas.';
+    } else {
+      btn.style.display = '';
+      status.innerHTML = '';
+      info.textContent = 'Podés modificar mientras no cierres tu quiniela y no empiece el Mundial.';
+    }
+  }
 
   // ============================================================
   // Apuestas Especiales (Campeón + 2 por grupo)
@@ -871,6 +1050,7 @@
 
   window.toggleQualifier = function(group, team) {
     if (!currentUser) return;
+    if (isMyQuinielaLocked()) { alert('🔒 Tu quiniela ya está bloqueada.'); return; }
     if (!allSpecials[currentUser.id]) allSpecials[currentUser.id] = { champion: '', groupQualifiers: {} };
     const bet = allSpecials[currentUser.id];
     if (!bet.groupQualifiers[group]) bet.groupQualifiers[group] = [];
@@ -889,6 +1069,7 @@
 
   window.saveSpecial = async function() {
     if (!currentUser) return;
+    if (isMyQuinielaLocked()) return alert('🔒 Tu quiniela ya está bloqueada. No podés modificar.');
     const champEl = document.getElementById('bet-champion');
     const bet = allSpecials[currentUser.id] || { champion: '', groupQualifiers: {} };
     if (champEl) bet.champion = champEl.value;
@@ -939,15 +1120,18 @@
       const specPts = computeSpecialPoints(uid);
       return { uid, name: allUsers[uid].name, pts: pts + specPts, exact, winner, specPts };
     }).sort((a, b) => b.pts - a.pts || b.exact - a.exact);
-    body.innerHTML = rows.map((r, i) => `
+    body.innerHTML = rows.map((r, i) => {
+      const locked = allUsers[r.uid]?.locked;
+      return `
       <tr class="${currentUser && r.uid === currentUser.id ? 'me' : ''}">
         <td class="rank">${i + 1}</td>
-        <td>${r.name}</td>
+        <td>${r.name} ${locked ? '<span title="Quiniela cerrada" style="color:var(--green)">🔒</span>' : ''}</td>
         <td>${r.exact}</td>
         <td>${r.winner}</td>
         <td>${r.specPts}</td>
         <td class="pts">${r.pts}</td>
-      </tr>`).join('') || '<tr><td colspan="6" class="small">Aún no hay LAGROS registrados.</td></tr>';
+      </tr>`;
+    }).join('') || '<tr><td colspan="6" class="small">Aún no hay LAGROS registrados.</td></tr>';
   }
 
   // ============================================================
@@ -1002,23 +1186,30 @@
     } else alert('Contraseña incorrecta');
   };
 
+  function slotToText(slot) {
+    if (typeof slot === 'string') {
+      if (slot[0] === '1') return `1° ${slot[1]}`;
+      if (slot[0] === '2') return `2° ${slot[1]}`;
+    }
+    if (slot && slot.thirdFrom) return `3° de (${slot.thirdFrom.split('').join('/')})`;
+    return '?';
+  }
+
   window.adminLoadMundial2026 = async function() {
-    if (!confirm('¿Cargar los 72 partidos de fase de grupos del Mundial 2026? Esto puede tomar un minuto. Si ya hay partidos cargados, se SUMAN (no se reemplazan).')) return;
+    if (!confirm('¿Cargar los 104 partidos del Mundial 2026 (72 grupos + 32 eliminatorias)? Esto puede tomar un minuto.')) return;
     let count = 0;
     const groupKeys = Object.keys(MUNDIAL_2026_GROUPS);
-    // round-robin: enfrentamientos por matchday
     const mdPairs = [
-      [[0,1],[2,3]], // MD1
-      [[0,2],[1,3]], // MD2
-      [[0,3],[1,2]], // MD3
+      [[0,1],[2,3]],
+      [[0,2],[1,3]],
+      [[0,3],[1,2]],
     ];
-    // dates: spread roughly across June 11-27, 2026
-    // For each matchday, all 12 groups play within ~4-5 days
     const mdStartDates = [
-      new Date('2026-06-11T12:00:00'), // MD1
-      new Date('2026-06-17T12:00:00'), // MD2
-      new Date('2026-06-22T12:00:00'), // MD3
+      new Date('2026-06-11T12:00:00'),
+      new Date('2026-06-17T12:00:00'),
+      new Date('2026-06-22T12:00:00'),
     ];
+    // FASE DE GRUPOS (72)
     for (let gi = 0; gi < groupKeys.length; gi++) {
       const groupKey = groupKeys[gi];
       const teams = MUNDIAL_2026_GROUPS[groupKey];
@@ -1026,8 +1217,8 @@
         for (let mi = 0; mi < 2; mi++) {
           const [a, b] = mdPairs[md][mi];
           const dateBase = new Date(mdStartDates[md]);
-          const dayOffset = Math.floor(gi / 3); // 3 groups per day
-          const hour = 12 + ((gi % 3) * 3) + (mi * 1); // 12,13,15,16,18,19
+          const dayOffset = Math.floor(gi / 3);
+          const hour = 12 + ((gi % 3) * 3) + (mi * 1);
           dateBase.setDate(dateBase.getDate() + dayOffset);
           dateBase.setHours(hour, 0, 0, 0);
           const id = `m_${groupKey}_md${md+1}_${mi+1}`;
@@ -1042,7 +1233,88 @@
         }
       }
     }
-    alert(`✅ ${count} partidos cargados! Andá a Mis Quinielas para verlos.`);
+    // 16avos (R32) — 16 partidos con placeholders
+    const r32Start = new Date('2026-06-28T12:00:00');
+    for (let i = 0; i < R32_BRACKET.length; i++) {
+      const b = R32_BRACKET[i];
+      const d = new Date(r32Start);
+      d.setDate(d.getDate() + Math.floor(i / 3));
+      d.setHours(12 + (i % 3) * 3, 0, 0, 0);
+      await setDoc(doc(db, 'matches', `m_r32_${i+1}`), {
+        team1: slotToText(b.slot1),
+        team2: slotToText(b.slot2),
+        stage: 'r32',
+        date: d.toISOString(),
+        placeholder: true
+      });
+      count++;
+    }
+    // OCTAVOS (R16) — 8 partidos
+    const r16Start = new Date('2026-07-04T12:00:00');
+    for (let i = 0; i < 8; i++) {
+      const d = new Date(r16Start);
+      d.setDate(d.getDate() + Math.floor(i / 2));
+      d.setHours(12 + (i % 2) * 4, 0, 0, 0);
+      await setDoc(doc(db, 'matches', `m_r16_${i+1}`), {
+        team1: `Gan. 16avos #${i*2+1}`,
+        team2: `Gan. 16avos #${i*2+2}`,
+        stage: 'r16',
+        date: d.toISOString(),
+        placeholder: true
+      });
+      count++;
+    }
+    // CUARTOS (QF) — 4 partidos
+    const qfStart = new Date('2026-07-09T15:00:00');
+    for (let i = 0; i < 4; i++) {
+      const d = new Date(qfStart);
+      d.setDate(d.getDate() + Math.floor(i / 2));
+      d.setHours(15 + (i % 2) * 4, 0, 0, 0);
+      await setDoc(doc(db, 'matches', `m_qf_${i+1}`), {
+        team1: `Gan. Octavos #${i*2+1}`,
+        team2: `Gan. Octavos #${i*2+2}`,
+        stage: 'qf',
+        date: d.toISOString(),
+        placeholder: true
+      });
+      count++;
+    }
+    // SEMIFINAL (SF) — 2 partidos
+    for (let i = 0; i < 2; i++) {
+      const d = new Date('2026-07-14T15:00:00');
+      d.setDate(d.getDate() + i);
+      await setDoc(doc(db, 'matches', `m_sf_${i+1}`), {
+        team1: `Gan. Cuartos #${i*2+1}`,
+        team2: `Gan. Cuartos #${i*2+2}`,
+        stage: 'sf',
+        date: d.toISOString(),
+        placeholder: true
+      });
+      count++;
+    }
+    // 3ER PUESTO
+    await setDoc(doc(db, 'matches', 'm_3rd_1'), {
+      team1: 'Perdedor Semi #1',
+      team2: 'Perdedor Semi #2',
+      stage: '3rd',
+      date: new Date('2026-07-18T15:00:00').toISOString(),
+      placeholder: true
+    });
+    count++;
+    // FINAL
+    await setDoc(doc(db, 'matches', 'm_final_1'), {
+      team1: 'Ganador Semi #1',
+      team2: 'Ganador Semi #2',
+      stage: 'final',
+      date: new Date('2026-07-19T15:00:00').toISOString(),
+      placeholder: true
+    });
+    count++;
+
+    alert(`✅ ${count} partidos cargados!\n\n` +
+          `📋 72 fase de grupos (con equipos reales)\n` +
+          `🏗️ 32 eliminatorias (con posiciones, ej: "1° A vs 3° de XYZ")\n\n` +
+          `Tus amigos ya pueden predecir TODO. Las eliminatorias se actualizarán con equipos reales a medida que se vayan jugando.`);
   };
 
   window.adminAddMatch = async function() {
@@ -1145,23 +1417,25 @@
   window.adminGenerateBracket = async function() {
     const q = getQualifiers();
     if (!q.allComplete) {
-      if (!confirm('⚠️ Todavía hay partidos de grupos sin resultado. ¿Querés generar igual el bracket con lo que hay? Los espacios sin definir quedarán como "?".')) return;
+      if (!confirm('⚠️ Todavía hay partidos de grupos sin resultado. ¿Querés actualizar igual con lo que hay? Los espacios sin definir quedan con su placeholder.')) return;
     }
-    if (!confirm('Se van a crear 16 partidos de 16avos con los cruces oficiales FIFA 2026. ¿Continuar?')) return;
+    if (!confirm('Se van a ACTUALIZAR los 16 partidos de 16avos con los equipos reales (1° A → México, etc.). Las predicciones de los LAGROS se mantienen. ¿Continuar?')) return;
     const usedThirds = new Set();
-    const startDate = new Date('2026-06-28T12:00:00');
     for (let i = 0; i < R32_BRACKET.length; i++) {
       const b = R32_BRACKET[i];
       const team1 = resolveBracketSlot(b.slot1, q, usedThirds);
       const team2 = resolveBracketSlot(b.slot2, q, usedThirds);
-      const d = new Date(startDate);
-      d.setDate(d.getDate() + Math.floor(i / 2));
-      d.setHours(12 + (i % 2) * 4);
+      const existing = allMatches.find(x => x.id === `m_r32_${i+1}`) || {};
+      delete existing.id;
       await setDoc(doc(db, 'matches', `m_r32_${i+1}`), {
-        team1, team2, stage: 'r32', date: d.toISOString()
+        ...existing,
+        team1: team1 !== '?' ? team1 : (existing.team1 || slotToText(b.slot1)),
+        team2: team2 !== '?' ? team2 : (existing.team2 || slotToText(b.slot2)),
+        stage: 'r32',
+        placeholder: false
       });
     }
-    alert('✅ 16 partidos de 16avos creados. Andá a "Mis Quinielas" → "16avos" para verlos.');
+    alert('✅ 16avos actualizados con equipos reales. Las predicciones de los LAGROS se mantuvieron intactas.');
   };
 
   function renderQualifiersPreview() {
